@@ -9,31 +9,55 @@ const getItemPriority = (item) => {
   return lowered === item ? value : value + 26;
 };
 
+const getDistinctItems = (contents) => {
+  const compartmentSize = contents.length / 2;
+  const compartment1 = contents.slice(0, compartmentSize);
+  const compartment2 = contents.slice(compartmentSize);
+
+  const getDistinct = (items) => [...new Set(items.split(""))];
+  return {
+    all: getDistinct(contents),
+    first: getDistinct(compartment1),
+    second: getDistinct(compartment2),
+  };
+};
+
+const getIntersection = (...arrays) =>
+  arrays.reduce((a, b) => a.filter((c) => b.includes(c)));
+
 class RucksackAnalyser {
+  #initialiseGroup() {
+    this.groupItems = [];
+  }
+
   constructor(pathToFile) {
     this.total = 0;
+    this.badgeTotal = 0;
     this.reader = readline.createInterface({
       input: fs.createReadStream(pathToFile),
     });
+
+    this.#initialiseGroup();
   }
 
   analyse() {
     return new Promise((resolve) => {
       this.reader
         .on("line", (input) => {
-          const compartmentSize = input.length / 2;
-          const compartment1 = input.slice(0, compartmentSize);
-          const compartment2 = input.slice(compartmentSize);
+          const { all, first, second } = getDistinctItems(input);
+          const compartmentCommon = getIntersection(first, second)[0];
+          this.total += getItemPriority(compartmentCommon);
 
-          const items1 = new Set(compartment1.split(""));
-          const items2 = new Set(compartment2.split(""));
+          this.groupItems.push(all);
 
-          const commonItem = [...items1].find((i) => items2.has(i));
-          const priority = getItemPriority(commonItem);
-          this.total += priority;
-          // console.log(`${commonItem}: ${priority}`);
+          if (this.groupItems.length === 3) {
+            const groupCommon = getIntersection(...this.groupItems)[0];
+            this.badgeTotal += getItemPriority(groupCommon);
+            
+            this.#initialiseGroup();
+          }
         })
-        .on("close", () => resolve(this.total));
+        .on("close", () => resolve([this.total, this.badgeTotal]));
     });
   }
 }
