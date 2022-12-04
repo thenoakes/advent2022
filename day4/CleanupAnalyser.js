@@ -12,16 +12,19 @@ class CleaningAssignment {
 
   /** Determines if a given assignment fully contains a second assignment */
   fullyContains({ min, max, count }) {
-    if (this.count < count) {
-      return false;
-    }
-    return this.min <= min && this.max >= max;
+    return this.count >= count && this.min <= min && this.max >= max;
+  }
+
+  /** Determines if a given assignment overlaps at all with a second assignment */
+  overlapsWith({ min, max }) {
+    return Math.min(this.max, max) >= Math.max(this.min, min);
   }
 }
 
 class CleanupAnalyser {
   constructor(pathToFile) {
     this.fullyContainedCount = 0;
+    this.overlappingCount = 0;
     this.reader = readline.createInterface({
       input: fs.createReadStream(pathToFile),
     });
@@ -39,8 +42,13 @@ class CleanupAnalyser {
           if (elf1.fullyContains(elf2) || elf2.fullyContains(elf1)) {
             this.fullyContainedCount += 1;
           }
+          if (elf1.overlapsWith(elf2)) {
+            this.overlappingCount += 1;
+          }
         })
-        .on("close", () => resolve(this.fullyContainedCount));
+        .on("close", () =>
+          resolve([this.fullyContainedCount, this.overlappingCount])
+        );
     });
   }
 }
