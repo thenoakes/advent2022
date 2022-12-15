@@ -57,7 +57,14 @@ class StackParser {
           console.log(
             `Parsed ${this.stackCount} stacks with a max height of ${this.maxHeight}`
           );
-          resolve(this.stacks);
+
+          const parsedStacks = this.stacks;
+          resolve({
+            parsedStacks,
+            getTopCrates() {
+              return parsedStacks.flatMap((s) => s.slice(-1)).join("");
+            },
+          });
         });
     });
   }
