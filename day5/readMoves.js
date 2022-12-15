@@ -1,4 +1,3 @@
-const attachment = require("../attachments");
 const readline = require("readline");
 const fs = require("fs");
 
