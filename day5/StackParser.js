@@ -15,22 +15,28 @@ class StackParser {
     });
   }
 
-  get output() {
+  get #output() {
     return [...this.raw.filter((row) => row.length)].reverse();
   }
 
   get maxHeight() {
-    return this.output.length;
+    return this.#output.length;
   }
 
   get stackCount() {
-    return this.output[0]?.length ?? 0;
+    return this.#output[0]?.length ?? 0;
   }
 
   getStack(index) {
     return index <= this.stackCount
-      ? this.output.map((r) => r[index]).filter(Boolean)
+      ? this.#output.map((r) => r[index]).filter(Boolean)
       : [];
+  }
+
+  get stacks() {
+    return Array.from({ length: this.stackCount }).map((_, idx) =>
+      this.getStack(idx)
+    );
   }
 
   parse() {
@@ -51,7 +57,7 @@ class StackParser {
           console.log(
             `Parsed ${this.stackCount} stacks with a max height of ${this.maxHeight}`
           );
-          resolve();
+          resolve(this.stacks);
         });
     });
   }
