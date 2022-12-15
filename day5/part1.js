@@ -29,29 +29,28 @@ const readMoves = () =>
       });
   });
 
-function executeMoves(moveArray) {
+const executeMoves = (moveArray) => {
   const parser = new StackParser(pathToFile);
   parser.parse().then((stacks) => {
+    function getTopCrates() {
+      return stacks.flatMap((s) => s.slice(-1)).join("");
+    }
 
-    function executeMove(move) {
-      const [count, source, destination] = move;
-      // console.log(`move ${count} from ${source} to ${destination}`);
-
-      const sourceStack = stacks[source - 1];
-      const destStack = stacks[destination - 1];
+    function execute([count, from, to]) {
+      const source = stacks[from - 1];
+      const destination = stacks[to - 1];
 
       for (let i = 0; i < count; i++) {
-        destStack.push(sourceStack.pop());
+        destination.push(source.pop());
       }
     }
 
     for (const move of moveArray) {
-      executeMove(move);
+      execute(move);
     }
 
-    console.log(stacks.flatMap((s) => s.slice(-1)).join(""));
+    console.log(getTopCrates());
   });
-}
+};
 
 readMoves().then((m) => executeMoves(m));
-
