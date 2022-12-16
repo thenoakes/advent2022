@@ -1,18 +1,17 @@
 const { processInput } = require("../parser/Parser");
 
 (async function () {
-  let max = 0;
-  let current = 0;
+  const state = { max: 0, current: 0 };
 
   await processInput("day1_calories.txt", (input) => {
     if (input.trim() === "") {
-      max = Math.max(current, max);
-      current = 0;
+      state.max = Math.max(state.current, state.max);
+      state.current = 0;
     } else {
       const val = parseInt(input);
-      current += val;
+      state.current += val;
     }
   });
 
-  console.log(max);
+  console.log(state.max);
 })();

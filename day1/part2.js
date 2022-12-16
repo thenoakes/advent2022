@@ -1,10 +1,17 @@
-const attachment = require("../attachments");
-const ElfAnalyser = require("./ElfAnalyser");
+const { processInput } = require("../parser/Parser");
 
-const pathToFile = attachment("day1_calories.txt");
-const analyser = new ElfAnalyser(pathToFile);
-analyser
-  .analyse((current, max = [0, 0, 0]) =>
-    [...max, current].sort((a, b) => a - b).slice(1)
-  )
-  .then((max) => console.log(max.reduce((a, n) => a + n)));
+(async function () {
+  const state = { max: [0, 0, 0], current: 0 };
+
+  await processInput("day1_calories.txt", (input) => {
+    if (input.trim() === "") {
+      state.max = [...state.max, state.current].sort((a, b) => a - b).slice(1);
+      state.current = 0;
+    } else {
+      const val = parseInt(input);
+      state.current += val;
+    }
+  });
+
+  console.log(state.max.reduce((a, n) => a + n));
+})();
