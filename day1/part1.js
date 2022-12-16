@@ -1,4 +1,4 @@
-const { processInput } = require("../parser/Parser");
+const { processInput } = require("../parser");
 
 (async function () {
   const state = { max: 0, current: 0 };

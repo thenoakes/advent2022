@@ -1,4 +1,4 @@
-const { processInput } = require("../parser/Parser");
+const { processInput } = require("../parser");
 
 const fileName = "day2_rockpaperscissors.txt";
 
@@ -50,7 +50,7 @@ const scoreForRound = (theirs, mine) => {
     state.score += scoreForRound(theirs, mine);
   });
 
-  console.log('Part 1', state.score);
+  console.log("Part 1", state.score);
 })();
 
 const calculateCounterMove = (move, strategy) => {
@@ -76,5 +76,5 @@ const calculateCounterMove = (move, strategy) => {
     state.score += scoreForRound(theirs, mine);
   });
 
-  console.log('Part 2', state.score);
+  console.log("Part 2", state.score);
 })();
