@@ -1,6 +1,8 @@
+const { processInput } = require("../parser");
 const readline = require("readline");
 const fs = require("fs");
-const attachment = require("../attachments");
+
+const fileName = "day7_terminal.txt";
 
 class FileSystemObject {
   constructor(name) {
@@ -20,19 +22,95 @@ class Directory extends FileSystemObject {
   constructor(name) {
     super(name);
     this.kind = "Directory";
-    this.children = {};
+    this.files = new Map();
+    this.directories = new Map();
   }
-  addObject(file) {
-    this.children[file.name] = file;
-    // return this.children[file.name];
+
+  addFile(name, size) {
+    this.files.set(name, new File(name, size));
   }
-  getChild(name) {
-    return this.children[name];
+
+  addDirectory(name) {
+    if (!this.directories.has(name)) {
+      this.directories.set(name, new Directory(name));
+    }
   }
+
+  getDirectory(name) {
+    return this.directories.get(name);
+  }
+
   get size() {
-    return Object.values(this.children).filter(f => f.kind === 'File').reduce((next, acc) => acc + next.size);
+    return (
+      sum(this.files.values(), (f) => f.size) +
+      sum(this.directories.values(), (f) => f.size)
+    );
   }
 }
+
+(async function () {
+  const state = { pwd: ["root"], root: new Directory("root") };
+
+  await processInput(fileName, (input) => {
+    if (/^\$ cd /.test(input)) {
+      const arg = input.slice("$ cd ".length);
+      switch (arg) {
+        case "/":
+          state.pwd = ["root"];
+          break;
+        case "..":
+          state.pwd.pop();
+          break;
+        default:
+          state.pwd.push(arg);
+          break;
+      }
+    }
+
+    if (/^dir /.test(input)) {
+      // A directory named dirName is at path pwd
+      const dirName = input.slice("dir ".length);
+      let target = state.root;
+      for (const segment of [...state.pwd, dirName]) {
+        // console.log({ segment, target });
+        target.addDirectory(segment);
+        // console.log({ target });
+        target = target.getDirectory(segment);
+      }
+    } else if (/^\d+ /.test(input)) {
+      const [size, name] = input.split(" ");
+      const sizeInt = parseInt(size);
+
+      let target = state.root;
+      for (const segment of state.pwd) {
+        // console.log({ segment, target });
+        target.addDirectory(segment);
+        // console.log({ target });
+        target = target.getDirectory(segment);
+      }
+      target.addFile(name, sizeInt);
+      // for (const segment of pwd) {
+      //   target = target[segment];
+      // }
+      // sizeMap.set(pwd.join("/"), getSize(target));
+    }
+  });
+
+  console.log("Part 1", state.root.size);
+  console.log(
+    "Part 1",
+    state.root
+      .getDirectory("cvt")
+      .getDirectory("dch")
+      .getDirectory("djfww")
+      .getDirectory("lbrhbc").size
+  );
+})();
+
+const sum = (vals, valueFn = (x) => x) =>
+  Array.from(vals)
+    .map(valueFn)
+    .reduce((acc, next) => acc + next, 0);
 
 class FileSystem {
   constructor(pathToFile) {
@@ -55,7 +133,6 @@ class FileSystem {
         // let currentLocation = this.root;
 
         let currentLocation = null;
-
 
         if (/^\$ cd /.test(input)) {
           isListing = false;
@@ -108,7 +185,7 @@ class FileSystem {
           //   console.log(currentPath);
           // }
         } else if (/^\$ ls/.test(input)) {
-          console.log('IS LISTING: ', input);
+          console.log("IS LISTING: ", input);
           isListing = true;
           // return;
         }
@@ -118,13 +195,13 @@ class FileSystem {
           //   if (test()) {
           //     // console.log(input);
           if (isDir) {
-            console.log('DIR: ', input);
+            console.log("DIR: ", input);
             const dirName = input.slice("dir ".length);
             if (!currentLocation.children[dirName]) {
               currentLocation.addObject(new Directory(dirName));
             }
           } else {
-            console.log('FILE: ', input);
+            console.log("FILE: ", input);
             const [size, name] = input.split(" ");
             currentLocation.addObject(new File(name, size));
             // currentLocation.addObject(new Directory())
@@ -153,4 +230,4 @@ class FileSystem {
   }
 }
 
-const myFileSystem = new FileSystem(attachment("day7_terminal.txt"));
+// const myFileSystem = new FileSystem(attachment("day7_terminal.txt"));
