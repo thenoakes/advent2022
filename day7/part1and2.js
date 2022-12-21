@@ -2,8 +2,9 @@ const { processInput } = require("../parser");
 
 const fileName = "day7_terminal.txt";
 
-const getSize = (contents) =>
-  Object.values(contents).reduce((acc, next) => acc + next, 0);
+/** Transform (optionally) and sum the values of an array of key-value pairs */
+const sum = (contents, transform = (x) => x) =>
+  Object.values(contents).reduce((acc, next) => acc + transform(next), 0);
 
 (async function () {
   const fileSystem = {};
@@ -51,30 +52,22 @@ const getSize = (contents) =>
     const subDirectories = Object.entries(fileSystem).filter(([key]) =>
       key.startsWith(path)
     );
-    const totalSize = subDirectories.reduce(
-      (acc, [, next]) => acc + getSize(next),
-      0
-    );
+    const totalSize = sum(subDirectories, ([, files]) => sum(files));
     sizeMap.set(path, totalSize);
   }
 
-  const largeDirs = [...sizeMap.entries()].filter(([, v]) => v <= 100000);
+  const largeDirs = [...sizeMap.values()].filter((v) => v <= 100000);
 
-  console.log("Part 1", largeDirs);
-  console.log(
-    "Total size",
-    largeDirs.reduce((acc, [, next]) => acc + next, 0)
-  );
+  console.log("Part 1", sum(largeDirs));
 
-  const spaceAvail = 70000000 - sizeMap.get("root");
-  const spaceRequd = 30000000 - spaceAvail;
-  console.log({ spaceRequd });
+  const spaceFree = 70000000 - sizeMap.get("root");
+  const spaceReqd = 30000000 - spaceFree;
 
-  for (const [dir, size] of [...sizeMap.entries()].sort(
-    ([, a], [, b]) => a - b
-  )) {
-    if (size >= spaceRequd) {
-      console.log(`Delete ${dir} to free up ${size}`);
+  const sortedDirs = [...sizeMap.entries()].sort(([, a], [, b]) => a - b);
+
+  for (const [dir, size] of sortedDirs) {
+    if (size >= spaceReqd) {
+      console.log("Part 2", `Delete ${dir} to free up ${size}`);
       break;
     }
   }
