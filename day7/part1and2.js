@@ -2,18 +2,24 @@ const { processInput } = require("../parser");
 
 const fileName = "day7_terminal.txt";
 
-const getSize = (entry) =>
-  Object.values(entry).reduce((acc, next) => {
-    if (typeof next === "number") {
-      return acc + next;
-    }
-    return acc + getSize(next);
-  }, 0);
+const getSize = (contents) =>
+  Object.values(contents).reduce((acc, next) => acc + next, 0);
 
 (async function () {
   const fileSystem = {};
-  let pwd = [];
-  const sizeMap = new Map();
+  let pwd = ["root"];
+
+  const registerCurrentDir = () => {
+    const key = pwd.join("/");
+    if (!fileSystem[key]) {
+      fileSystem[key] = {};
+    }
+  };
+
+  const registerFile = (fileName, size) => {
+    const key = pwd.join("/");
+    fileSystem[key][fileName] = size;
+  };
 
   await processInput(fileName, (input) => {
     // cd
@@ -21,7 +27,7 @@ const getSize = (entry) =>
       const arg = input.slice("$ cd ".length);
       switch (arg) {
         case "/":
-          pwd = [];
+          pwd = ["root"];
           break;
         case "..":
           pwd.pop();
@@ -30,76 +36,47 @@ const getSize = (entry) =>
           pwd.push(arg);
           break;
       }
-    }
-
-    let target = fileSystem;
-    for (const segment of pwd) {
-      if (!target[segment]) {
-        target[segment] = {};
-      }
-      target = target[segment];
+      registerCurrentDir();
     }
 
     if (/^\d+ /.test(input)) {
       const [size, name] = input.split(" ");
-
-      let target = fileSystem;
-      for (const segment of pwd) {
-        target = target[segment];
-      }
-      target[name] = parseInt(size);
-      sizeMap.set(pwd.join("/"), getSize(target));
+      registerFile(name, parseInt(size));
     }
   });
 
-  console.log("Part 1", JSON.stringify(fileSystem));
-  console.log("Part 1", sizeMap);
+  const sizeMap = new Map();
+
+  for (const path in fileSystem) {
+    const subDirectories = Object.entries(fileSystem).filter(([key]) =>
+      key.startsWith(path)
+    );
+    const totalSize = subDirectories.reduce(
+      (acc, [, next]) => acc + getSize(next),
+      0
+    );
+    sizeMap.set(path, totalSize);
+  }
+
+  const largeDirs = [...sizeMap.entries()].filter(([, v]) => v <= 100000);
+
+  console.log("Part 1", largeDirs);
   console.log(
-    "Test",
-    sizeMap.get("cvt/dch/djfww/lbrhbc"),
-    sizeMap.get("cvt/dch/djfww/lbrhbc/djfww")
-  );
-  console.log(
-    "Dirs",
-    Array.from(sizeMap.entries())
-      .filter(([_, v]) => v <= 100000)
-      // .reduce((acc, [_, v]) => (acc + v), 0)
-      .map(([k, _]) => k)
+    "Total size",
+    largeDirs.reduce((acc, [, next]) => acc + next, 0)
   );
 
-  // const tlds = Object.keys(fileSystem).filter(
-  //   (x) => typeof fileSystem[x] === "object"
-  // );
+  const spaceAvail = 70000000 - sizeMap.get("root");
+  const spaceRequd = 30000000 - spaceAvail;
+  console.log({ spaceRequd });
 
-  // const totalToClean = tlds.reduce((acc, next) => {
-  //   const size = getSize(fileSystem[next]);
-  //   console.log(next, size);
-  //   return size <= 100000 ? acc + size : acc;
-  // }, 0);
-
-  // const dirsToClean = Object.entries(fileSystem)
-  //   .filter(
-  //     ([_, value]) => typeof value === "object" && getSize(value) <= 100000
-  //   )
-  //   .map(([name]) => name);
-
-  // console.log("Part 1", totalToClean);
+  for (const [dir, size] of [...sizeMap.entries()].sort(
+    ([, a], [, b]) => a - b
+  )) {
+    if (size >= spaceRequd) {
+      console.log(`Delete ${dir} to free up ${size}`);
+      break;
+    }
+  }
 })();
 
-// const sample = {
-//   "hcqbmwc.gts": 4967,
-//   "hsbhwb.clj": 5512,
-//   "pwgswq.fld": 277125,
-//   "qdzr.btl": 42131,
-//   "vmbnlzgb.wbd": 144372,
-//   cvt: {
-//     "bcqrmp.czf": 146042,
-//     "hvfvt.qtb": 243293,
-//     lrpb: 245795,
-//     "qlqqmndd.zcb": 181756,
-//     "rtfzt.tjp": 18658,
-//     bbgsthsd: { "djfww.fcb": 236957, "hcqbmwc.gts": 112286, qggjrzts: 106102 },
-//   },
-// };
-
-// console.log(getSize(sample));
